@@ -34,15 +34,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (username: string, password: string) => {
     setLoading(true)
     try {
-      // Try real API first, fall back to mock for demo
       let userData: User
       try {
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL || '/api'}/auth/login`,
           { username, password },
-          { timeout: 3000 },
+          { timeout: 5000 },
         )
-        userData = response.data
+        const data = response.data
+        userData = {
+          id: String(data.operatorId || data.id || '1'),
+          username: data.username || username,
+          email: data.email || `${username}@parking.fr`,
+          role: data.role === 'Admin' ? 'Administrateur' : data.role || 'Opérateur',
+          token: data.accessToken || data.token,
+          refreshToken: data.refreshToken,
+        }
       } catch {
         // Mock authentication for demo purposes
         if (password.length < 1) throw new Error('Mot de passe requis')
@@ -83,7 +90,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, logout])
 
   useEffect(() => {
-    // Auto-refresh token every 14 minutes
     if (!user) return
     const interval = setInterval(refreshToken, 14 * 60 * 1000)
     return () => clearInterval(interval)
