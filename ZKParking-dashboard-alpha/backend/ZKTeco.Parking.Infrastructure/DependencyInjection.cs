@@ -1,32 +1,34 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using ZKTeco.Parking.Domain.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using ZKTeco.Parking.Infrastructure.Data;
+using ZKTeco.Parking.Domain.Interfaces;
 using ZKTeco.Parking.Infrastructure.Repositories;
 
-namespace ZKTeco.Parking.Infrastructure;
+namespace Microsoft.Extensions.DependencyInjection;
 
-public static class DependencyInjection
+public static class InfrastructureDependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
-            ?? configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Database connection string not found.");
-
+        // 1. Liaison de la base PostgreSQL
         services.AddDbContext<ParkingDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
-        // Register repositories
+        // 2. Enregistrement des Repositories pour le groupe 1 (Gestion des Enregistrements et des Portes)
         services.AddScoped<IParkingRecordRepository, ParkingRecordRepository>();
+        services.AddScoped<IGateRepository, GateRepository>();
+
+        // 3. Enregistrement des Repositories pour le groupe 2 (Gestion du Parking global et des Terminaux)
+        services.AddScoped<IParkingRepository, ParkingRepository>();
+        services.AddScoped<ITerminalRepository, TerminalRepository>();
+
+        // 4. Enregistrement des Repositories Utilisateurs et Abonnés
         services.AddScoped<ISubscriberRepository, SubscriberRepository>();
         services.AddScoped<IOperatorRepository, OperatorRepository>();
-        services.AddScoped<IPaymentRepository, PaymentRepository>();
-        services.AddScoped<IGateRepository, GateRepository>();
-        services.AddScoped<ITerminalRepository, TerminalRepository>();
+
+        // 5. Enregistrement du Repository des Alertes
         services.AddScoped<IAlertRepository, AlertRepository>();
-        services.AddScoped<IParkingRepository, ParkingRepository>();
 
         return services;
     }

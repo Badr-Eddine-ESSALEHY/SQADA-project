@@ -153,3 +153,9 @@ C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\bac
 C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.API\obj\Debug\net8.0\ZKTeco.Parking.API.pdb
 C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.API\obj\Debug\net8.0\ZKTeco.Parking.API.genruntimeconfig.cache
 C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.API\obj\Debug\net8.0\ref\ZKTeco.Parking.API.dll
+C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.API\obj\Debug\net8.0\ZKTeco.Parking.API.sourcelink.json
+C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.API\bin\Debug\net8.0\BouncyCastle.Cryptography.dll
+C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.API\bin\Debug\net8.0\MailKit.dll
+C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.API\bin\Debug\net8.0\MimeKit.dll
+C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.API\bin\Debug\net8.0\System.Security.Cryptography.Pkcs.dll
+C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.API\bin\Debug\net8.0\runtimes\win\lib\net8.0\System.Security.Cryptography.Pkcs.dll

@@ -13,3 +13,4 @@ C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\bac
 C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\refint\ZKTeco.Parking.Domain.dll
 C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ZKTeco.Parking.Domain.pdb
 C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ref\ZKTeco.Parking.Domain.dll
+C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ZKTeco.Parking.Domain.sourcelink.json

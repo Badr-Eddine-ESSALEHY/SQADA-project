@@ -16,4 +16,5 @@ public class DashboardStatsDto
     public double AverageDuration { get; set; }
     public decimal AverageTicketAmount { get; set; }
     public int ExpiringSubscriptions { get; set; }
+
 }

@@ -36,3 +36,4 @@ C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\bac
 C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Infrastructure\obj\Debug\net8.0\ZKTeco.Parking.Infrastructure.pdb
 C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Infrastructure\obj\Debug\net8.0\ZKTeco.Parking.Infrastructure.genruntimeconfig.cache
 C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Infrastructure\obj\Debug\net8.0\ref\ZKTeco.Parking.Infrastructure.dll
+C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Infrastructure\obj\Debug\net8.0\ZKTeco.Parking.Infrastructure.sourcelink.json

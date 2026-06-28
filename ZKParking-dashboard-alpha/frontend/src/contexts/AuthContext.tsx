@@ -20,6 +20,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+const API_URL = import.meta.env.VITE_API_URL || '/api'
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
     try {
@@ -34,36 +36,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (username: string, password: string) => {
     setLoading(true)
     try {
-      let userData: User
-      try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL || '/api'}/auth/login`,
-          { username, password },
-          { timeout: 5000 },
-        )
-        const data = response.data
-        userData = {
-          id: String(data.operatorId || data.id || '1'),
-          username: data.username || username,
-          email: data.email || `${username}@parking.fr`,
-          role: data.role === 'Admin' ? 'Administrateur' : data.role || 'Opérateur',
-          token: data.accessToken || data.token,
-          refreshToken: data.refreshToken,
-        }
-      } catch {
-        // Mock authentication for demo purposes
-        if (password.length < 1) throw new Error('Mot de passe requis')
-        userData = {
-          id: '1',
-          username,
-          email: `${username}@parking.fr`,
-          role: username === 'admin' ? 'Administrateur' : 'Opérateur',
-          token: `mock-jwt-token-${Date.now()}`,
-          refreshToken: `mock-refresh-token-${Date.now()}`,
-        }
+      const response = await axios.post(
+        `${API_URL}/auth/login`,
+        { username, password },
+        { timeout: 5000 }
+      )
+      const data = response.data
+      const userData: User = {
+        id: String(data.operatorId || data.id || '1'),
+        username: data.username || username,
+        email: data.email || `${username}@parking.com`,
+        role: data.role === 'Admin' ? 'Administrateur' : data.role || 'Opérateur',
+        token: data.accessToken || data.token,
+        refreshToken: data.refreshToken,
       }
       setUser(userData)
       localStorage.setItem('parkingUser', JSON.stringify(userData))
+    } catch (err) {
+      console.error("Authentication handshake failed:", err)
+      throw new Error("Identifiants incorrects ou serveur injoignable.")
     } finally {
       setLoading(false)
     }
@@ -78,10 +69,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user?.refreshToken) return
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL || '/api'}/auth/refresh`,
-        { refreshToken: user.refreshToken },
+        `${API_URL}/auth/refresh`,
+        { refreshToken: user.refreshToken }
       )
-      const updated = { ...user, token: response.data.token }
+      const updated = { ...user, token: response.data.accessToken || response.data.token }
       setUser(updated)
       localStorage.setItem('parkingUser', JSON.stringify(updated))
     } catch {
@@ -103,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
+  const context = useContext(AuthContext)
+  if (!context) throw new Error('useAuth must be used within an AuthProvider')
+  return context
 }

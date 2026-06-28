@@ -93,4 +93,24 @@ public class DashboardService : IDashboardService
             CreatedAt = p.CreatedAt
         });
     }
+
+    public async Task<IEnumerable<RevenueChartDto>> GetRevenueChartAsync(int parkingId, int days)
+    {
+        var result = new List<RevenueChartDto>();
+        var today = DateTime.Today;
+        for (int i = days - 1; i >= 0; i--)
+        {
+            var day = today.AddDays(-i);
+            var records = (await _parkingRecordRepository.GetByDateRangeAsync(
+                parkingId, day, day.AddDays(1).AddTicks(-1))).ToList();
+            result.Add(new RevenueChartDto
+            {
+                Label = day.ToString("dd/MM"),
+                Date = day,
+                Revenue = records.Where(r => r.Amount.HasValue).Sum(r => r.Amount!.Value),
+                TicketCount = records.Count
+            });
+        }
+        return result;
+    }
 }

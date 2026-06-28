@@ -8,6 +8,7 @@
     <ProjectReference Include="..\ZKTeco.Parking.Domain\ZKTeco.Parking.Domain.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="QuestPDF" Version="2024.3.4" />
     <PackageReference Include="ClosedXML" Version="0.102.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />

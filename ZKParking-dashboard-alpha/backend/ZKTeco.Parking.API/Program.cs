@@ -7,13 +7,20 @@ using ZKTeco.Parking.Infrastructure;
 using ZKTeco.Parking.Infrastructure.Data;
 using ZKTeco.Parking.API.Hubs;
 
+// Add these using statements
+using ZKTeco.Parking.Application.Interfaces;
+using ZKTeco.Parking.Application.Services;
+using ZKTeco.Parking.API.Services;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddInfrastructure(builder.Configuration);
+
 
 // Swagger with JWT support
 builder.Services.AddSwaggerGen(c =>
@@ -39,7 +46,11 @@ builder.Services.AddSwaggerGen(c =>
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
             },
             Array.Empty<string>()
         }
@@ -49,6 +60,7 @@ builder.Services.AddSwaggerGen(c =>
 // JWT Authentication
 var jwtSecret = builder.Configuration["JwtSettings:Secret"]
     ?? throw new InvalidOperationException("JWT Secret not configured");
+
 var jwtIssuer = builder.Configuration["JwtSettings:Issuer"] ?? "ZKTecoParkingDashboard";
 var jwtAudience = builder.Configuration["JwtSettings:Audience"] ?? "ZKTecoParkingClients";
 
@@ -78,10 +90,13 @@ builder.Services.AddAuthentication(options =>
         {
             var accessToken = context.Request.Query["access_token"];
             var path = context.HttpContext.Request.Path;
-            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+
+            if (!string.IsNullOrEmpty(accessToken) &&
+                path.StartsWithSegments("/hubs"))
             {
                 context.Token = accessToken;
             }
+
             return Task.CompletedTask;
         }
     };
@@ -108,9 +123,19 @@ builder.Services.AddCors(options =>
 // SignalR
 builder.Services.AddSignalR();
 
-// Application & Infrastructure layers
+// Application & Infrastructure
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// ===============================
+// Email Service Registration
+// ===============================
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+// ===============================
+// Background Scheduler
+// ===============================
+builder.Services.AddHostedService<DailyReportSchedulerService>();
 
 var app = builder.Build();
 
@@ -118,6 +143,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ParkingDbContext>();
+
     try
     {
         await DataSeeder.SeedAsync(dbContext);
@@ -125,7 +151,11 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogWarning(ex, "Database seeding failed (database may not be available): {Message}", ex.Message);
+
+        logger.LogWarning(
+            ex,
+            "Database seeding failed (database may not be available): {Message}",
+            ex.Message);
     }
 }
 
@@ -133,18 +163,24 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
+
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ZKTeco Parking Dashboard API v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json",
+            "ZKTeco Parking Dashboard API v1");
+
         c.RoutePrefix = "swagger";
     });
 }
 
 app.UseCors("ReactFrontend");
+
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();
+
 app.MapHub<ParkingHub>("/hubs/parking");
 
 app.Run();

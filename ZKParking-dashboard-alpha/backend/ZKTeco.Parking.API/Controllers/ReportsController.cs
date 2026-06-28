@@ -10,61 +10,103 @@ namespace ZKTeco.Parking.API.Controllers;
 public class ReportsController : ControllerBase
 {
     private readonly IReportService _reportService;
+    private readonly IEmailService _emailService;
+    private readonly IConfiguration _config;
 
-    public ReportsController(IReportService reportService)
+    public ReportsController(IReportService reportService, IEmailService emailService, IConfiguration config)
     {
         _reportService = reportService;
+        _emailService = emailService;
+        _config = config;
     }
 
-    /// <summary>Generate daily report as PDF</summary>
-    [HttpGet("daily/pdf")]
-    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetDailyReportPdf(
-        [FromQuery] int parkingId = 1,
-        [FromQuery] DateTime? date = null)
+    [HttpPost("daily")]
+    public async Task<IActionResult> GetDailyReport(
+        [FromBody] ReportRequest request)
     {
-        var targetDate = date ?? DateTime.UtcNow;
-        var pdfBytes = await _reportService.GenerateDailyReportPdfAsync(parkingId, targetDate);
-        return File(pdfBytes, "application/pdf", $"daily-report-{targetDate:yyyy-MM-dd}.pdf");
+        var date = request.Date ?? DateTime.Today;
+        var parkingId = request.ParkingId ?? 1;
+
+        if (request.Format == "excel")
+        {
+            var excel = await _reportService.GenerateDailyReportExcelAsync(parkingId, date);
+            return File(excel,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"rapport-journalier-{date:yyyy-MM-dd}.xlsx");
+        }
+        var pdf = await _reportService.GenerateDailyReportPdfAsync(parkingId, date);
+        return File(pdf, "application/pdf", $"rapport-journalier-{date:yyyy-MM-dd}.pdf");
     }
 
-    /// <summary>Generate daily report as Excel</summary>
-    [HttpGet("daily/excel")]
-    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetDailyReportExcel(
-        [FromQuery] int parkingId = 1,
-        [FromQuery] DateTime? date = null)
+    [HttpPost("weekly")]
+    public async Task<IActionResult> GetWeeklyReport([FromBody] ReportRequest request)
     {
-        var targetDate = date ?? DateTime.UtcNow;
-        var excelBytes = await _reportService.GenerateDailyReportExcelAsync(parkingId, targetDate);
-        return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"daily-report-{targetDate:yyyy-MM-dd}.xlsx");
+        var date = request.Date ?? DateTime.Today;
+        var weekStart = date.AddDays(-(int)date.DayOfWeek + 1);
+        var parkingId = request.ParkingId ?? 1;
+
+        if (request.Format == "excel")
+        {
+            var excel = await _reportService.GenerateWeeklyReportExcelAsync(parkingId, weekStart);
+            return File(excel,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"rapport-hebdomadaire-{weekStart:yyyy-MM-dd}.xlsx");
+        }
+        var pdf = await _reportService.GenerateWeeklyReportPdfAsync(parkingId, weekStart);
+        return File(pdf, "application/pdf", $"rapport-hebdomadaire-{weekStart:yyyy-MM-dd}.pdf");
     }
 
-    /// <summary>Generate monthly report as PDF</summary>
-    [HttpGet("monthly/pdf")]
-    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetMonthlyReportPdf(
-        [FromQuery] int parkingId = 1,
-        [FromQuery] int? year = null,
-        [FromQuery] int? month = null)
+    [HttpPost("monthly")]
+    public async Task<IActionResult> GetMonthlyReport([FromBody] ReportRequest request)
     {
-        var targetYear = year ?? DateTime.UtcNow.Year;
-        var targetMonth = month ?? DateTime.UtcNow.Month;
-        var pdfBytes = await _reportService.GenerateMonthlyReportPdfAsync(parkingId, targetYear, targetMonth);
-        return File(pdfBytes, "application/pdf", $"monthly-report-{targetYear}-{targetMonth:D2}.pdf");
+        var date = request.Date ?? DateTime.Today;
+        var parkingId = request.ParkingId ?? 1;
+
+        if (request.Format == "excel")
+        {
+            var excel = await _reportService.GenerateMonthlyReportExcelAsync(parkingId, date.Year, date.Month);
+            return File(excel,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"rapport-mensuel-{date:yyyy-MM}.xlsx");
+        }
+        var pdf = await _reportService.GenerateMonthlyReportPdfAsync(parkingId, date.Year, date.Month);
+        return File(pdf, "application/pdf", $"rapport-mensuel-{date:yyyy-MM}.pdf");
     }
 
-    /// <summary>Generate monthly report as Excel</summary>
-    [HttpGet("monthly/excel")]
-    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetMonthlyReportExcel(
-        [FromQuery] int parkingId = 1,
-        [FromQuery] int? year = null,
-        [FromQuery] int? month = null)
+    [HttpPost("annual")]
+    public async Task<IActionResult> GetAnnualReport([FromBody] ReportRequest request)
     {
-        var targetYear = year ?? DateTime.UtcNow.Year;
-        var targetMonth = month ?? DateTime.UtcNow.Month;
-        var excelBytes = await _reportService.GenerateMonthlyReportExcelAsync(parkingId, targetYear, targetMonth);
-        return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"monthly-report-{targetYear}-{targetMonth:D2}.xlsx");
+        var date = request.Date ?? DateTime.Today;
+        var parkingId = request.ParkingId ?? 1;
+
+        if (request.Format == "excel")
+        {
+            var excel = await _reportService.GenerateAnnualReportExcelAsync(parkingId, date.Year);
+            return File(excel,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"rapport-annuel-{date.Year}.xlsx");
+        }
+        var pdf = await _reportService.GenerateAnnualReportPdfAsync(parkingId, date.Year);
+        return File(pdf, "application/pdf", $"rapport-annuel-{date.Year}.pdf");
     }
+
+    [HttpPost("send-test-email")]
+    public async Task<IActionResult> SendTestEmail()
+    {
+        var ownerEmail = _config["EmailSettings:OwnerEmail"] ?? "";
+        if (string.IsNullOrEmpty(ownerEmail))
+            return BadRequest(new { message = "OwnerEmail not configured in appsettings.json" });
+
+        var pdf = await _reportService.GenerateDailyReportPdfAsync(1, DateTime.Today);
+        var excel = await _reportService.GenerateDailyReportExcelAsync(1, DateTime.Today);
+        await _emailService.SendDailyReportAsync(ownerEmail, "Parking Central", DateTime.Today, pdf, excel);
+        return Ok(new { message = "Test email sent successfully" });
+    }
+}
+
+public class ReportRequest
+{
+    public int? ParkingId { get; set; }
+    public DateTime? Date { get; set; }
+    public string Format { get; set; } = "pdf";
 }

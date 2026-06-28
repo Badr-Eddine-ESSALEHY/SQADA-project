@@ -2,9 +2,9 @@ using Microsoft.Extensions.DependencyInjection;
 using ZKTeco.Parking.Application.Interfaces;
 using ZKTeco.Parking.Application.Services;
 
-namespace ZKTeco.Parking.Application;
+namespace Microsoft.Extensions.DependencyInjection;
 
-public static class DependencyInjection
+public static class ApplicationDependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
@@ -16,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IMaintenanceService, MaintenanceService>();
         services.AddScoped<IUserService, UserService>();
+        
         return services;
     }
 }

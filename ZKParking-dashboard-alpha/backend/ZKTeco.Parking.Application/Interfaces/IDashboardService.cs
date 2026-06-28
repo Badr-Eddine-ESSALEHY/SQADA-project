@@ -6,4 +6,7 @@ public interface IDashboardService
 {
     Task<DashboardStatsDto> GetDashboardStatsAsync(int parkingId, DateTime date);
     Task<IEnumerable<ParkingDto>> GetParkingListAsync();
+    Task<IEnumerable<RevenueChartDto>> GetRevenueChartAsync(int parkingId, int days);
+
+    
 }
