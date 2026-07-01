@@ -82,6 +82,7 @@ export default function ReportsPage() {
     const today = new Date().toISOString().split('T')[0]
     return { daily: today, weekly: today, monthly: today.substring(0, 7), custom: today }
   })
+  const [customEndDate, setCustomEndDate] = useState<string>(() => new Date().toISOString().split('T')[0])
 
   const [recentReports, setRecentReports] = useState<RecentReport[]>([])
   const [loadingHistory, setLoadingHistory] = useState(true)
@@ -117,12 +118,35 @@ export default function ReportsPage() {
     setError(null)
 
     try {
-      const response = await reportsApi.generate(reportId, { date: dates[reportId], format })
-      
+      let payload: Record<string, string>
+
+      if (reportId === 'monthly') {
+        // <input type="month"> gives "yyyy-MM"; the backend expects a full DateTime,
+        // so normalize to the first day of that month before sending.
+        payload = { date: `${dates.monthly}-01`, format }
+      } else if (reportId === 'custom') {
+        if (!dates.custom || !customEndDate) {
+          setError('Veuillez sélectionner une date de début et une date de fin.')
+          setDownloading(null)
+          return
+        }
+        if (customEndDate < dates.custom) {
+          setError('La date de fin doit être postérieure ou égale à la date de début.')
+          setDownloading(null)
+          return
+        }
+        payload = { startDate: dates.custom, endDate: customEndDate, format }
+      } else {
+        payload = { date: dates[reportId], format }
+      }
+
+      const response = await reportsApi.generate(reportId, payload)
+
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', `Rapport_${reportId}_${dates[reportId]}.${format === 'pdf' ? 'pdf' : 'xlsx'}`)
+      const filenameDate = reportId === 'custom' ? `${dates.custom}_${customEndDate}` : dates[reportId]
+      link.setAttribute('download', `Rapport_${reportId}_${filenameDate}.${format === 'pdf' ? 'pdf' : 'xlsx'}`)
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -171,13 +195,25 @@ export default function ReportsPage() {
                   <Divider sx={{ my: 2 }} />
                   <TextField
                     fullWidth
-                    label="Sélectionner la période"
+                    label={type.id === 'custom' ? 'Date de début' : 'Sélectionner la période'}
                     type={type.dateType === 'month' ? 'month' : 'date'}
                     value={dates[type.id]}
                     onChange={(e) => handleDateChange(type.id, e.target.value)}
                     InputLabelProps={{ shrink: true }}
                     size="small"
                   />
+                  {type.id === 'custom' && (
+                    <TextField
+                      fullWidth
+                      label="Date de fin"
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      size="small"
+                      sx={{ mt: 1 }}
+                    />
+                  )}
                 </CardContent>
                 <CardActions sx={{ p: 3, pt: 0, gap: 1 }}>
                   <Button

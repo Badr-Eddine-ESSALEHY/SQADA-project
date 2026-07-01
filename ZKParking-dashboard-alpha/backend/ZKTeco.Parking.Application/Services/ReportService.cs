@@ -633,7 +633,113 @@ public class ReportService : IReportService
         ws.Columns().AdjustToContents();
     }
 
-    // ── Daily Excel ──────────────────────────────────────────────────────────
+    // ── Custom Range PDF ─────────────────────────────────────────────────────
+
+    public async Task<byte[]> GenerateCustomReportPdfAsync(int parkingId, DateTime startDate, DateTime endDate)
+    {
+        var parking = await _parkingRepository.GetByIdAsync(parkingId);
+        var start = startDate.Date;
+        var end = endDate.Date.AddDays(1).AddTicks(-1);
+        var records = (await _recordRepository.GetByDateRangeAsync(parkingId, start, end)).ToList();
+        var subscribers = (await _subscriberRepository.GetAllAsync())
+            .Count(s => s.ParkingId == parkingId && s.Status == "Active");
+        var totalSpaces = parking?.TotalSpaces ?? 100;
+        var spanDays = (end.Date - start).Days + 1;
+
+        return BuildPdf(
+            parking?.Name ?? "Parking",
+            "Rapport Personnalisé — Filtré",
+            $"Du {start:dd/MM/yyyy} au {end:dd/MM/yyyy}",
+            records, totalSpaces, subscribers,
+            col =>
+            {
+                AddStatsTable(col, records, totalSpaces);
+
+                // Daily breakdown only shown for reasonably short ranges to keep the PDF readable
+                if (spanDays <= 31)
+                {
+                    col.Item().PaddingTop(14).Text("Détail Journalier").FontSize(11).Bold();
+                    col.Item().PaddingTop(4).Table(table =>
+                    {
+                        table.ColumnsDefinition(c =>
+                        {
+                            c.RelativeColumn(2);
+                            c.RelativeColumn(1);
+                            c.RelativeColumn(1);
+                            c.RelativeColumn(1);
+                            c.RelativeColumn(2);
+                        });
+
+                        static IContainer Hdr(IContainer c) =>
+                            c.Background(Colors.Grey.Lighten2).Padding(5);
+
+                        table.Header(h =>
+                        {
+                            h.Cell().Element(Hdr).Text("Date").Bold().FontSize(9);
+                            h.Cell().Element(Hdr).Text("Entrées").Bold().FontSize(9);
+                            h.Cell().Element(Hdr).Text("Sorties").Bold().FontSize(9);
+                            h.Cell().Element(Hdr).Text("Tk.Perdus").Bold().FontSize(9);
+                            h.Cell().Element(Hdr).Text("CA (Dh)").Bold().FontSize(9);
+                        });
+
+                        bool alt = false;
+                        for (var d = start; d <= end.Date; d = d.AddDays(1))
+                        {
+                            var dr = records.Where(r => r.EntryTime.Date == d).ToList();
+                            string bg = alt ? Colors.Grey.Lighten4 : Colors.White;
+                            table.Cell().Background(bg).Padding(4).Text(d.ToString("ddd dd/MM")).FontSize(9);
+                            table.Cell().Background(bg).Padding(4).Text(dr.Count.ToString()).FontSize(9);
+                            table.Cell().Background(bg).Padding(4).Text(dr.Count(r => r.ExitTime.HasValue).ToString()).FontSize(9);
+                            table.Cell().Background(bg).Padding(4).Text(LostTickets(dr).ToString()).FontSize(9);
+                            table.Cell().Background(bg).Padding(4).Text($"{TotalRevenue(dr):F2}").FontSize(9);
+                            alt = !alt;
+                        }
+                    });
+                }
+                else
+                {
+                    // Long range: monthly breakdown instead of daily
+                    col.Item().PaddingTop(14).Text("Résumé Mensuel").FontSize(11).Bold();
+                    col.Item().PaddingTop(4).Table(table =>
+                    {
+                        table.ColumnsDefinition(c =>
+                        {
+                            c.RelativeColumn(2);
+                            c.RelativeColumn(1);
+                            c.RelativeColumn(1);
+                            c.RelativeColumn(2);
+                        });
+
+                        static IContainer Hdr(IContainer c) =>
+                            c.Background(Colors.Grey.Lighten2).Padding(5);
+
+                        table.Header(h =>
+                        {
+                            h.Cell().Element(Hdr).Text("Mois").Bold().FontSize(9);
+                            h.Cell().Element(Hdr).Text("Entrées").Bold().FontSize(9);
+                            h.Cell().Element(Hdr).Text("Sorties").Bold().FontSize(9);
+                            h.Cell().Element(Hdr).Text("CA (Dh)").Bold().FontSize(9);
+                        });
+
+                        bool alt = false;
+                        foreach (var g in records.GroupBy(r => new { r.EntryTime.Year, r.EntryTime.Month })
+                                     .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month))
+                        {
+                            string bg = alt ? Colors.Grey.Lighten4 : Colors.White;
+                            var label = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMMM yyyy");
+                            table.Cell().Background(bg).Padding(4).Text(label).FontSize(9);
+                            table.Cell().Background(bg).Padding(4).Text(g.Count().ToString()).FontSize(9);
+                            table.Cell().Background(bg).Padding(4).Text(g.Count(r => r.ExitTime.HasValue).ToString()).FontSize(9);
+                            table.Cell().Background(bg).Padding(4).Text($"{TotalRevenue(g.ToList()):F2}").FontSize(9);
+                            alt = !alt;
+                        }
+                    });
+                }
+            }
+        ).GeneratePdf();
+    }
+
+
 
     public async Task<byte[]> GenerateDailyReportExcelAsync(int parkingId, DateTime date)
     {
@@ -771,6 +877,49 @@ public class ReportService : IReportService
         ws2.Columns().AdjustToContents();
 
         AddOperatorSheet(wb, records);
+        using var stream = new MemoryStream();
+        wb.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    // ── Custom Range Excel ───────────────────────────────────────────────────
+
+    public async Task<byte[]> GenerateCustomReportExcelAsync(int parkingId, DateTime startDate, DateTime endDate)
+    {
+        var parking = await _parkingRepository.GetByIdAsync(parkingId);
+        var start = startDate.Date;
+        var end = endDate.Date.AddDays(1).AddTicks(-1);
+        var records = (await _recordRepository.GetByDateRangeAsync(parkingId, start, end)).ToList();
+        var subscribers = (await _subscriberRepository.GetAllAsync())
+            .Count(s => s.ParkingId == parkingId && s.Status == "Active");
+
+        using var wb = new XLWorkbook();
+        AddKpiSheet(wb, records, parking?.Name ?? "Parking",
+            $"Du {start:dd/MM/yyyy} au {end:dd/MM/yyyy}", parking?.TotalSpaces ?? 100, subscribers);
+
+        var ws2 = wb.Worksheets.Add("Détail Journalier");
+        string[] h = { "Date", "Entrées", "Sorties", "Tk.Perdus", "CA (Dh)" };
+        for (int i = 0; i < h.Length; i++)
+        {
+            ws2.Cell(1, i + 1).Value = h[i];
+            ws2.Cell(1, i + 1).Style.Font.Bold = true;
+            ws2.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+        int r = 2;
+        for (var d = start; d <= end.Date; d = d.AddDays(1))
+        {
+            var dr = records.Where(x => x.EntryTime.Date == d).ToList();
+            ws2.Cell(r, 1).Value = d.ToString("ddd dd/MM/yyyy");
+            ws2.Cell(r, 2).Value = dr.Count;
+            ws2.Cell(r, 3).Value = dr.Count(x => x.ExitTime.HasValue);
+            ws2.Cell(r, 4).Value = LostTickets(dr);
+            ws2.Cell(r, 5).Value = (double)TotalRevenue(dr);
+            r++;
+        }
+        ws2.Columns().AdjustToContents();
+
+        AddOperatorSheet(wb, records);
+        AddTransactionsSheet(wb, records);
         using var stream = new MemoryStream();
         wb.SaveAs(stream);
         return stream.ToArray();
