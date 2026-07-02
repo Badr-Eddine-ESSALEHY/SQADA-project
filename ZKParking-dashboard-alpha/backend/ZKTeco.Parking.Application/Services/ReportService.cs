@@ -47,7 +47,13 @@ public class ReportService : IReportService
         var c = r.Where(x => x.Duration.HasValue).ToList();
         return c.Any() ? c.Average(x => x.Duration!.Value.TotalMinutes) : 0;
     }
+    private static decimal TotalRevenueDay(List<ParkingRecord> r) =>
+        r.Where(x => x.Amount.HasValue && x.EntryTime.Hour >= 6 && x.EntryTime.Hour < 20)
+        .Sum(x => x.Amount!.Value);
 
+    private static decimal TotalRevenueNight(List<ParkingRecord> r) =>
+        r.Where(x => x.Amount.HasValue && (x.EntryTime.Hour < 6 || x.EntryTime.Hour >= 20))
+        .Sum(x => x.Amount!.Value);
     // ── PDF Builder ──────────────────────────────────────────────────────────
 
     private static IDocument BuildPdf(
@@ -306,6 +312,8 @@ public class ReportService : IReportService
             StatRow("Nombre des Sorties (NS)", records.Count(r => r.ExitTime.HasValue).ToString());
             StatRow("Tickets < 15min", records.Count(r => r.Duration.HasValue && r.Duration.Value.TotalMinutes < 15).ToString());
             StatRow("Chiffre d'Affaire (Dh)", $"{TotalRevenue(records):F2}");
+            StatRow("Chiffre d'Affaire Jour (Dh)", $"{TotalRevenueDay(records):F2}");
+            StatRow("Chiffre d'Affaire Nuit (Dh)", $"{TotalRevenueNight(records):F2}");
             StatRow("Ticket Moyen (Dh)", records.Any(r => r.Amount.HasValue)
                 ? $"{records.Where(r => r.Amount.HasValue).Average(r => r.Amount!.Value):F2}" : "0.00");
             StatRow("Ratio de Rotation (NE/CP)", totalSpaces > 0
@@ -314,6 +322,7 @@ public class ReportService : IReportService
                 $"{(totalSpaces > 0 ? (double)records.Count(r => !r.ExitTime.HasValue) / totalSpaces * 100 : 0):F2} %");
             StatRow("Durée moyenne de stationnement",
                 $"{(int)avgDur / 60} H : {(int)avgDur % 60} min");
+
         });
     }
 
@@ -646,6 +655,15 @@ public class ReportService : IReportService
         using var wb = new XLWorkbook();
         AddKpiSheet(wb, records, parking?.Name ?? "Parking",
             $"Chiffre d'affaires du {date:yyyy-MM-dd}", parking?.TotalSpaces ?? 100, subscribers);
+
+        // New: add day/night revenue rows to the KPI sheet
+        var ws = wb.Worksheet("Résumé KPI");
+        int lastRow = ws.LastRowUsed().RowNumber() + 1;
+        ws.Cell(lastRow, 1).Value = "CA Jour (Dh)";
+        ws.Cell(lastRow, 2).Value = (double)TotalRevenueDay(records);
+        ws.Cell(lastRow + 1, 1).Value = "CA Nuit (Dh)";
+        ws.Cell(lastRow + 1, 2).Value = (double)TotalRevenueNight(records);
+
         AddOperatorSheet(wb, records);
         AddTransactionsSheet(wb, records);
         using var stream = new MemoryStream();
@@ -775,4 +793,106 @@ public class ReportService : IReportService
         wb.SaveAs(stream);
         return stream.ToArray();
     }
+    // ── Custom Range PDF ─────────────────────────────────────────────────────
+
+    public async Task<byte[]> GenerateCustomReportPdfAsync(int parkingId, DateTime startDate, DateTime endDate)
+    {
+        var parking = await _parkingRepository.GetByIdAsync(parkingId);
+        var start = startDate.Date;
+        var end = endDate.Date.AddDays(1).AddTicks(-1);
+        var records = (await _recordRepository.GetByDateRangeAsync(parkingId, start, end)).ToList();
+        var subscribers = (await _subscriberRepository.GetAllAsync())
+            .Count(s => s.ParkingId == parkingId && s.Status == "Active");
+        var totalSpaces = parking?.TotalSpaces ?? 100;
+
+        return BuildPdf(
+            parking?.Name ?? "Parking",
+            "Rapport Personnalisé",
+            $"Du {start:dd/MM/yyyy} au {end:dd/MM/yyyy}",
+            records, totalSpaces, subscribers,
+            col =>
+            {
+                col.Item().PaddingTop(14).Text("Détail Journalier").FontSize(11).Bold();
+                col.Item().PaddingTop(4).Table(table =>
+                {
+                    table.ColumnsDefinition(c =>
+                    {
+                        c.RelativeColumn(2);
+                        c.RelativeColumn(1);
+                        c.RelativeColumn(1);
+                        c.RelativeColumn(1);
+                        c.RelativeColumn(2);
+                    });
+
+                    static IContainer Hdr(IContainer c) =>
+                        c.Background(Colors.Grey.Lighten2).Padding(5);
+
+                    table.Header(h =>
+                    {
+                        h.Cell().Element(Hdr).Text("Date").Bold().FontSize(9);
+                        h.Cell().Element(Hdr).Text("Entrées").Bold().FontSize(9);
+                        h.Cell().Element(Hdr).Text("Sorties").Bold().FontSize(9);
+                        h.Cell().Element(Hdr).Text("Tk.Perdus").Bold().FontSize(9);
+                        h.Cell().Element(Hdr).Text("CA (Dh)").Bold().FontSize(9);
+                    });
+
+                    bool alt = false;
+                    for (var d = start; d <= end.Date; d = d.AddDays(1))
+                    {
+                        var dr = records.Where(r => r.EntryTime.Date == d).ToList();
+                        string bg = alt ? Colors.Grey.Lighten4 : Colors.White;
+                        table.Cell().Background(bg).Padding(4).Text(d.ToString("ddd dd/MM/yyyy")).FontSize(9);
+                        table.Cell().Background(bg).Padding(4).Text(dr.Count.ToString()).FontSize(9);
+                        table.Cell().Background(bg).Padding(4).Text(dr.Count(r => r.ExitTime.HasValue).ToString()).FontSize(9);
+                        table.Cell().Background(bg).Padding(4).Text(LostTickets(dr).ToString()).FontSize(9);
+                        table.Cell().Background(bg).Padding(4).Text($"{TotalRevenue(dr):F2}").FontSize(9);
+                        alt = !alt;
+                    }
+                });
+            }
+        ).GeneratePdf();
+    }
+
+    // ── Custom Range Excel ───────────────────────────────────────────────────
+
+    public async Task<byte[]> GenerateCustomReportExcelAsync(int parkingId, DateTime startDate, DateTime endDate)
+    {
+        var parking = await _parkingRepository.GetByIdAsync(parkingId);
+        var start = startDate.Date;
+        var end = endDate.Date.AddDays(1).AddTicks(-1);
+        var records = (await _recordRepository.GetByDateRangeAsync(parkingId, start, end)).ToList();
+        var subscribers = (await _subscriberRepository.GetAllAsync())
+            .Count(s => s.ParkingId == parkingId && s.Status == "Active");
+
+        using var wb = new XLWorkbook();
+        AddKpiSheet(wb, records, parking?.Name ?? "Parking",
+            $"Du {start:dd/MM/yyyy} au {end:dd/MM/yyyy}", parking?.TotalSpaces ?? 100, subscribers);
+
+        var ws2 = wb.Worksheets.Add("Détail Journalier");
+        string[] h = { "Date", "Entrées", "Sorties", "Tk.Perdus", "CA (Dh)" };
+        for (int i = 0; i < h.Length; i++)
+        {
+            ws2.Cell(1, i + 1).Value = h[i];
+            ws2.Cell(1, i + 1).Style.Font.Bold = true;
+            ws2.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+        int r = 2;
+        for (var d = start; d <= end.Date; d = d.AddDays(1))
+        {
+            var dr = records.Where(x => x.EntryTime.Date == d).ToList();
+            ws2.Cell(r, 1).Value = d.ToString("ddd dd/MM/yyyy");
+            ws2.Cell(r, 2).Value = dr.Count;
+            ws2.Cell(r, 3).Value = dr.Count(x => x.ExitTime.HasValue);
+            ws2.Cell(r, 4).Value = LostTickets(dr);
+            ws2.Cell(r, 5).Value = (double)TotalRevenue(dr);
+            r++;
+        }
+        ws2.Columns().AdjustToContents();
+
+        AddOperatorSheet(wb, records);
+        using var stream = new MemoryStream();
+        wb.SaveAs(stream);
+        return stream.ToArray();
+    }
 }
+ 

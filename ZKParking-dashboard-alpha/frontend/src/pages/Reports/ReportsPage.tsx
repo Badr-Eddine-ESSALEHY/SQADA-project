@@ -82,6 +82,7 @@ export default function ReportsPage() {
     const today = new Date().toISOString().split('T')[0]
     return { daily: today, weekly: today, monthly: today.substring(0, 7), custom: today }
   })
+  const [endDates, setEndDates] = useState<Record<string, string>>({})
 
   const [recentReports, setRecentReports] = useState<RecentReport[]>([])
   const [loadingHistory, setLoadingHistory] = useState(true)
@@ -89,27 +90,27 @@ export default function ReportsPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const loadReportHistory = useCallback(async () => {
-    try {
-      setLoadingHistory(true)
-      const res = await reportsApi.getRecent()
-      setRecentReports(res.data || [])
-    } catch (err) {
-      console.error("Failed loading database generation profiles", err)
-      setError("Impossible de charger l'historique des rapports.")
-    } finally {
-      setLoadingHistory(false)
-    }
-  }, [])
+const loadReportHistory = async () => {
+  try {
+    const response = await reportsApi.getRecent()
+    setRecentReports(response.data)
+  } catch (err) {
+    console.warn("Report history endpoint not available yet", err)
+    setRecentReports([]) // no error shown, just empty history
+  }
+}
+
 
   useEffect(() => {
     loadReportHistory()
-  }, [loadReportHistory])
+  }, [])
 
   const handleDateChange = (id: string, val: string) => {
     setDates((prev) => ({ ...prev, [id]: val }))
   }
-
+  const handleEndDateChange = (id: string, val: string) => {
+    setEndDates((prev) => ({ ...prev, [id]: val }))
+  }
   const handleGenerate = async (reportId: string, format: 'pdf' | 'excel') => {
     const operationKey = `${reportId}-${format}`
     setDownloading(operationKey)
@@ -117,7 +118,16 @@ export default function ReportsPage() {
     setError(null)
 
     try {
-      const response = await reportsApi.generate(reportId, { date: dates[reportId], format })
+      const rawDate = dates[reportId]
+      // "2026-07" (month picker) -> "2026-07-01" (full date for C# DateTime)
+      const normalizedDate = rawDate?.length === 7 ? `${rawDate}-01` : rawDate
+
+      const response = await reportsApi.generate(reportId, {
+       date: normalizedDate,
+       endDate: reportId === 'custom' ? endDates[reportId] : undefined,
+       format,
+
+      })
       
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
@@ -169,15 +179,28 @@ export default function ReportsPage() {
                     </Box>
                   </Box>
                   <Divider sx={{ my: 2 }} />
-                  <TextField
-                    fullWidth
-                    label="Sélectionner la période"
-                    type={type.dateType === 'month' ? 'month' : 'date'}
-                    value={dates[type.id]}
-                    onChange={(e) => handleDateChange(type.id, e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    size="small"
-                  />
+                    <TextField
+                        fullWidth
+                        label="Sélectionner la période"
+                        type={type.dateType === 'month' ? 'month' : 'date'}
+                        value={dates[type.id]}
+                        onChange={(e) => handleDateChange(type.id, e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        size="small"
+                      />
+
+                      {type.id === 'custom' && (
+                        <TextField
+                           fullWidth
+                           label="Date de fin"
+                           type="date"
+                           value={endDates[type.id] || ''}
+                           onChange={(e) => handleEndDateChange(type.id, e.target.value)}
+                           InputLabelProps={{ shrink: true }}
+                           size="small"
+                           sx={{ mt: 1 }}
+                        />
+                      )}
                 </CardContent>
                 <CardActions sx={{ p: 3, pt: 0, gap: 1 }}>
                   <Button

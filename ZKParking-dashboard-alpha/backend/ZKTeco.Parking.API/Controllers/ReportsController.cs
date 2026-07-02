@@ -21,8 +21,7 @@ public class ReportsController : ControllerBase
     }
 
     [HttpPost("daily")]
-    public async Task<IActionResult> GetDailyReport(
-        [FromBody] ReportRequest request)
+    public async Task<IActionResult> GetDailyReport([FromBody] ReportRequest request)
     {
         var date = request.Date ?? DateTime.Today;
         var parkingId = request.ParkingId ?? 1;
@@ -90,6 +89,27 @@ public class ReportsController : ControllerBase
         return File(pdf, "application/pdf", $"rapport-annuel-{date.Year}.pdf");
     }
 
+    [HttpPost("custom")]
+    public async Task<IActionResult> GetCustomReport([FromBody] ReportRequest request)
+    {
+        if (request.Date == null || request.EndDate == null)
+            return BadRequest(new { message = "Les dates de début et de fin sont requises." });
+
+        var startDate = request.Date.Value;
+        var endDate = request.EndDate.Value;
+        var parkingId = request.ParkingId ?? 1;
+
+        if (request.Format == "excel")
+        {
+            var excel = await _reportService.GenerateCustomReportExcelAsync(parkingId, startDate, endDate);
+            return File(excel,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"rapport-personnalise-{startDate:yyyy-MM-dd}-{endDate:yyyy-MM-dd}.xlsx");
+        }
+        var pdf = await _reportService.GenerateCustomReportPdfAsync(parkingId, startDate, endDate);
+        return File(pdf, "application/pdf", $"rapport-personnalise-{startDate:yyyy-MM-dd}-{endDate:yyyy-MM-dd}.pdf");
+    }
+
     [HttpPost("send-test-email")]
     public async Task<IActionResult> SendTestEmail()
     {
@@ -108,5 +128,6 @@ public class ReportRequest
 {
     public int? ParkingId { get; set; }
     public DateTime? Date { get; set; }
+    public DateTime? EndDate { get; set; }
     public string Format { get; set; } = "pdf";
 }

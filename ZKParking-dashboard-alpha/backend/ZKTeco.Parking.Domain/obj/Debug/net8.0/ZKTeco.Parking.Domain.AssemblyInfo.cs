@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ZKTeco.Parking.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f38f209bac839f794ae3294fd46791604db4cb09")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6b87f8ba023002d99d501dc4bda2eb29115f6fc3")]
 [assembly: System.Reflection.AssemblyProductAttribute("ZKTeco.Parking.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ZKTeco.Parking.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

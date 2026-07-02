@@ -14,3 +14,15 @@ C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\bac
 C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ZKTeco.Parking.Domain.pdb
 C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ref\ZKTeco.Parking.Domain.dll
 C:\Users\badre\Downloads\ZKParking-dashboard-alpha\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ZKTeco.Parking.Domain.sourcelink.json
+C:\Users\dell\Desktop\SQADA-project\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\bin\Debug\net8.0\ZKTeco.Parking.Domain.deps.json
+C:\Users\dell\Desktop\SQADA-project\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\bin\Debug\net8.0\ZKTeco.Parking.Domain.dll
+C:\Users\dell\Desktop\SQADA-project\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\bin\Debug\net8.0\ZKTeco.Parking.Domain.pdb
+C:\Users\dell\Desktop\SQADA-project\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ZKTeco.Parking.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\dell\Desktop\SQADA-project\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ZKTeco.Parking.Domain.AssemblyInfoInputs.cache
+C:\Users\dell\Desktop\SQADA-project\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ZKTeco.Parking.Domain.AssemblyInfo.cs
+C:\Users\dell\Desktop\SQADA-project\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ZKTeco.Parking.Domain.csproj.CoreCompileInputs.cache
+C:\Users\dell\Desktop\SQADA-project\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ZKTeco.Parking.Domain.sourcelink.json
+C:\Users\dell\Desktop\SQADA-project\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ZKTeco.Parking.Domain.dll
+C:\Users\dell\Desktop\SQADA-project\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\refint\ZKTeco.Parking.Domain.dll
+C:\Users\dell\Desktop\SQADA-project\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ZKTeco.Parking.Domain.pdb
+C:\Users\dell\Desktop\SQADA-project\ZKParking-dashboard-alpha\backend\ZKTeco.Parking.Domain\obj\Debug\net8.0\ref\ZKTeco.Parking.Domain.dll
