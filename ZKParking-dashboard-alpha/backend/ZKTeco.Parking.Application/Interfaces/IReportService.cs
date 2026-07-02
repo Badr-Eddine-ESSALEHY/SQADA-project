@@ -12,5 +12,7 @@ public interface IReportService
     Task<byte[]> GenerateAnnualReportExcelAsync(int parkingId, int year);
     Task<byte[]> GenerateCustomReportPdfAsync(int parkingId, DateTime startDate, DateTime endDate);
     Task<byte[]> GenerateCustomReportExcelAsync(int parkingId, DateTime startDate, DateTime endDate);
+
     
+
 }

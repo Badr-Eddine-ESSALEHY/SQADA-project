@@ -82,7 +82,9 @@ export default function ReportsPage() {
     const today = new Date().toISOString().split('T')[0]
     return { daily: today, weekly: today, monthly: today.substring(0, 7), custom: today }
   })
+
   const [endDates, setEndDates] = useState<Record<string, string>>({})
+
 
   const [recentReports, setRecentReports] = useState<RecentReport[]>([])
   const [loadingHistory, setLoadingHistory] = useState(true)
@@ -118,6 +120,7 @@ const loadReportHistory = async () => {
     setError(null)
 
     try {
+
       const rawDate = dates[reportId]
       // "2026-07" (month picker) -> "2026-07-01" (full date for C# DateTime)
       const normalizedDate = rawDate?.length === 7 ? `${rawDate}-01` : rawDate
@@ -129,10 +132,12 @@ const loadReportHistory = async () => {
 
       })
       
+
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', `Rapport_${reportId}_${dates[reportId]}.${format === 'pdf' ? 'pdf' : 'xlsx'}`)
+      const filenameDate = reportId === 'custom' ? `${dates.custom}_${customEndDate}` : dates[reportId]
+      link.setAttribute('download', `Rapport_${reportId}_${filenameDate}.${format === 'pdf' ? 'pdf' : 'xlsx'}`)
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -179,6 +184,7 @@ const loadReportHistory = async () => {
                     </Box>
                   </Box>
                   <Divider sx={{ my: 2 }} />
+
                     <TextField
                         fullWidth
                         label="Sélectionner la période"
@@ -201,6 +207,7 @@ const loadReportHistory = async () => {
                            sx={{ mt: 1 }}
                         />
                       )}
+
                 </CardContent>
                 <CardActions sx={{ p: 3, pt: 0, gap: 1 }}>
                   <Button

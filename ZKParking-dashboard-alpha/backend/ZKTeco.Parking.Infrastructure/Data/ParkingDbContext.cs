@@ -15,6 +15,7 @@ public class ParkingDbContext : DbContext
     public DbSet<Terminal> Terminals { get; set; } = null!;
     public DbSet<Payment> Payments { get; set; } = null!;
     public DbSet<Alert> Alerts { get; set; } = null!;
+    public DbSet<GeneratedReport> GeneratedReports { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -215,6 +216,24 @@ public class ParkingDbContext : DbContext
                 .WithMany(p => p.Alerts)
                 .HasForeignKey(e => e.ParkingId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // GeneratedReport
+        modelBuilder.Entity<GeneratedReport>(entity =>
+        {
+            entity.ToTable("generated_report");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
+            entity.Property(e => e.ParkingId).HasColumnName("parking_id");
+            entity.Property(e => e.ParkingName).HasColumnName("parking_name").HasMaxLength(200);
+            entity.Property(e => e.ReportType).HasColumnName("report_type").HasMaxLength(50);
+            entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(200);
+            entity.Property(e => e.PeriodLabel).HasColumnName("period_label").HasMaxLength(200);
+            entity.Property(e => e.Format).HasColumnName("format").HasMaxLength(20);
+            entity.Property(e => e.FileSizeBytes).HasColumnName("file_size_bytes");
+            entity.Property(e => e.GeneratedAt).HasColumnName("generated_at").HasDefaultValueSql("NOW()");
+
+            entity.HasIndex(e => e.GeneratedAt);
         });
     }
 }
