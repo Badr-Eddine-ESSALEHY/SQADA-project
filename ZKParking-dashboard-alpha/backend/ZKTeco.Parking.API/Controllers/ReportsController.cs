@@ -177,38 +177,28 @@ public class ReportsController : ControllerBase
         return File(pdf, "application/pdf", $"rapport-annuel-{date.Year}.pdf");
     }
 
-    // ── Custom date range ────────────────────────────────────────────────────
 
     [HttpPost("custom")]
-    public async Task<IActionResult> GetCustomReport([FromBody] CustomReportRequest request)
+    public async Task<IActionResult> GetCustomReport([FromBody] ReportRequest request)
     {
-        if (request.StartDate is null || request.EndDate is null)
-            return BadRequest(new { message = "startDate et endDate sont requis." });
+        if (request.Date == null || request.EndDate == null)
+            return BadRequest(new { message = "Les dates de début et de fin sont requises." });
 
-        var start = request.StartDate.Value.Date;
-        var end = request.EndDate.Value.Date;
-
-        if (end < start)
-            return BadRequest(new { message = "endDate doit être postérieure ou égale à startDate." });
-
+        var startDate = request.Date.Value;
+        var endDate = request.EndDate.Value;
         var parkingId = request.ParkingId ?? 1;
-        var periodLabel = $"{start:dd/MM/yyyy} - {end:dd/MM/yyyy}";
 
         if (request.Format == "excel")
         {
-            var excel = await _reportService.GenerateCustomReportExcelAsync(parkingId, start, end);
-            await LogGeneratedReportAsync(parkingId, "custom", "Rapport Personnalisé", periodLabel, "EXCEL", excel.Length);
+            var excel = await _reportService.GenerateCustomReportExcelAsync(parkingId, startDate, endDate);
             return File(excel,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                $"rapport-personnalise-{start:yyyy-MM-dd}_{end:yyyy-MM-dd}.xlsx");
+                $"rapport-personnalise-{startDate:yyyy-MM-dd}-{endDate:yyyy-MM-dd}.xlsx");
         }
-
-        var pdf = await _reportService.GenerateCustomReportPdfAsync(parkingId, start, end);
-        await LogGeneratedReportAsync(parkingId, "custom", "Rapport Personnalisé", periodLabel, "PDF", pdf.Length);
-        return File(pdf, "application/pdf", $"rapport-personnalise-{start:yyyy-MM-dd}_{end:yyyy-MM-dd}.pdf");
+        var pdf = await _reportService.GenerateCustomReportPdfAsync(parkingId, startDate, endDate);
+        return File(pdf, "application/pdf", $"rapport-personnalise-{startDate:yyyy-MM-dd}-{endDate:yyyy-MM-dd}.pdf");
     }
 
-    // ── Test email ───────────────────────────────────────────────────────────
 
     [HttpPost("send-test-email")]
     public async Task<IActionResult> SendTestEmail()
@@ -228,6 +218,7 @@ public class ReportRequest
 {
     public int? ParkingId { get; set; }
     public DateTime? Date { get; set; }
+    public DateTime? EndDate { get; set; }
     public string Format { get; set; } = "pdf";
 }
 
