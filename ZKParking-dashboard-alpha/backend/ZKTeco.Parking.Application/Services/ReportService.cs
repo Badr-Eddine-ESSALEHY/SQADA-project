@@ -337,7 +337,7 @@ public class ReportService : IReportService
         ).GeneratePdf();
     }
 
-    // â”€â”€ Weekly PDF â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Weekly PDF 
 
     public async Task<byte[]> GenerateWeeklyReportPdfAsync(int parkingId, DateTime weekStart)
     {
