@@ -1,4 +1,4 @@
-using ClosedXML.Excel;
+﻿using ClosedXML.Excel;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -27,7 +27,7 @@ public class ReportService : IReportService
         _operatorRepository = operatorRepository;
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private static int NightEntries(List<ParkingRecord> r) =>
         r.Count(x => x.EntryTime.Hour < 6 || x.EntryTime.Hour >= 20);
@@ -48,7 +48,7 @@ public class ReportService : IReportService
         return c.Any() ? c.Average(x => x.Duration!.Value.TotalMinutes) : 0;
     }
 
-    // ── PDF Builder ──────────────────────────────────────────────────────────
+    // â”€â”€ PDF Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private static IDocument BuildPdf(
         string parkingName,
@@ -276,7 +276,7 @@ public class ReportService : IReportService
         });
     }
 
-    // ── Stats table helper ───────────────────────────────────────────────────
+    // â”€â”€ Stats table helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private static void AddStatsTable(ColumnDescriptor col,
         List<ParkingRecord> records, int totalSpaces)
@@ -317,7 +317,7 @@ public class ReportService : IReportService
         });
     }
 
-    // ── Daily PDF ────────────────────────────────────────────────────────────
+    // â”€â”€ Daily PDF â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<byte[]> GenerateDailyReportPdfAsync(int parkingId, DateTime date)
     {
@@ -331,13 +331,13 @@ public class ReportService : IReportService
         return BuildPdf(
             parking?.Name ?? "Parking",
             "Rapport Journalier — C.A Visiteurs",
-            $"Chiffre d'affaires du {date:yyyy-MM-dd}",
+            $"Chiffre d'affaires du {date:dd/MM/yyyy}",
             records, totalSpaces, subscribers,
             col => AddStatsTable(col, records, totalSpaces)
         ).GeneratePdf();
     }
 
-    // ── Weekly PDF ───────────────────────────────────────────────────────────
+    // â”€â”€ Weekly PDF â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<byte[]> GenerateWeeklyReportPdfAsync(int parkingId, DateTime weekStart)
     {
@@ -397,7 +397,7 @@ public class ReportService : IReportService
         ).GeneratePdf();
     }
 
-    // ── Monthly PDF ──────────────────────────────────────────────────────────
+    // â”€â”€ Monthly PDF â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<byte[]> GenerateMonthlyReportPdfAsync(int parkingId, int year, int month)
     {
@@ -412,7 +412,7 @@ public class ReportService : IReportService
         return BuildPdf(
             parking?.Name ?? "Parking",
             "Rapport Mensuel",
-            $"{start:MMMM yyyy}",
+            $"{start.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("fr-FR"))}",
             records, totalSpaces, subscribers,
             col =>
             {
@@ -457,7 +457,7 @@ public class ReportService : IReportService
         ).GeneratePdf();
     }
 
-    // ── Annual PDF ───────────────────────────────────────────────────────────
+    // â”€â”€ Annual PDF â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<byte[]> GenerateAnnualReportPdfAsync(int parkingId, int year)
     {
@@ -504,7 +504,7 @@ public class ReportService : IReportService
                         var mr = records.Where(r => r.EntryTime.Month == m).ToList();
                         string bg = alt ? Colors.Grey.Lighten4 : Colors.White;
                         table.Cell().Background(bg).Padding(4)
-                            .Text(new DateTime(year, m, 1).ToString("MMMM yyyy")).FontSize(9);
+                            .Text(new DateTime(year, m, 1).ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("fr-FR"))).FontSize(9);
                         table.Cell().Background(bg).Padding(4).Text(mr.Count.ToString()).FontSize(9);
                         table.Cell().Background(bg).Padding(4).Text(mr.Count(r => r.ExitTime.HasValue).ToString()).FontSize(9);
                         table.Cell().Background(bg).Padding(4).Text($"{TotalRevenue(mr):F2}").FontSize(9);
@@ -515,7 +515,7 @@ public class ReportService : IReportService
         ).GeneratePdf();
     }
 
-    // ── Excel helpers ────────────────────────────────────────────────────────
+    // â”€â”€ Excel helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private static void AddKpiSheet(XLWorkbook wb, List<ParkingRecord> records,
         string parkingName, string period, int totalSpaces, int subscribers)
@@ -633,7 +633,7 @@ public class ReportService : IReportService
         ws.Columns().AdjustToContents();
     }
 
-    // ── Custom Range PDF ─────────────────────────────────────────────────────
+    // â”€â”€ Custom Range PDF â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<byte[]> GenerateCustomReportPdfAsync(int parkingId, DateTime startDate, DateTime endDate)
     {
@@ -648,7 +648,7 @@ public class ReportService : IReportService
 
         return BuildPdf(
             parking?.Name ?? "Parking",
-            "Rapport Personnalisé — Filtré",
+            "Rapport Personnalisé â€” Filtré",
             $"Du {start:dd/MM/yyyy} au {end:dd/MM/yyyy}",
             records, totalSpaces, subscribers,
             col =>
@@ -726,7 +726,7 @@ public class ReportService : IReportService
                                      .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month))
                         {
                             string bg = alt ? Colors.Grey.Lighten4 : Colors.White;
-                            var label = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMMM yyyy");
+                            var label = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("fr-FR"));
                             table.Cell().Background(bg).Padding(4).Text(label).FontSize(9);
                             table.Cell().Background(bg).Padding(4).Text(g.Count().ToString()).FontSize(9);
                             table.Cell().Background(bg).Padding(4).Text(g.Count(r => r.ExitTime.HasValue).ToString()).FontSize(9);
@@ -751,7 +751,7 @@ public class ReportService : IReportService
 
         using var wb = new XLWorkbook();
         AddKpiSheet(wb, records, parking?.Name ?? "Parking",
-            $"Chiffre d'affaires du {date:yyyy-MM-dd}", parking?.TotalSpaces ?? 100, subscribers);
+            $"Chiffre d'affaires du {date:dd/MM/yyyy}", parking?.TotalSpaces ?? 100, subscribers);
         AddOperatorSheet(wb, records);
         AddTransactionsSheet(wb, records);
         using var stream = new MemoryStream();
@@ -759,7 +759,7 @@ public class ReportService : IReportService
         return stream.ToArray();
     }
 
-    // ── Weekly Excel ─────────────────────────────────────────────────────────
+    // â”€â”€ Weekly Excel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<byte[]> GenerateWeeklyReportExcelAsync(int parkingId, DateTime weekStart)
     {
@@ -801,7 +801,7 @@ public class ReportService : IReportService
         return stream.ToArray();
     }
 
-    // ── Monthly Excel ────────────────────────────────────────────────────────
+    // â”€â”€ Monthly Excel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<byte[]> GenerateMonthlyReportExcelAsync(int parkingId, int year, int month)
     {
@@ -814,7 +814,7 @@ public class ReportService : IReportService
 
         using var wb = new XLWorkbook();
         AddKpiSheet(wb, records, parking?.Name ?? "Parking",
-            $"{start:MMMM yyyy}", parking?.TotalSpaces ?? 100, subscribers);
+            $"{start.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("fr-FR"))}", parking?.TotalSpaces ?? 100, subscribers);
 
         var ws2 = wb.Worksheets.Add("Résumé Journalier");
         string[] h = { "Date", "Entrées", "Sorties", "Tk.Perdus", "CA (Dh)" };
@@ -843,7 +843,7 @@ public class ReportService : IReportService
         return stream.ToArray();
     }
 
-    // ── Annual Excel ─────────────────────────────────────────────────────────
+    // â”€â”€ Annual Excel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<byte[]> GenerateAnnualReportExcelAsync(int parkingId, int year)
     {
@@ -869,7 +869,7 @@ public class ReportService : IReportService
         for (int m = 1; m <= 12; m++)
         {
             var mr = records.Where(x => x.EntryTime.Month == m).ToList();
-            ws2.Cell(1 + m, 1).Value = new DateTime(year, m, 1).ToString("MMMM yyyy");
+            ws2.Cell(1 + m, 1).Value = new DateTime(year, m, 1).ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("fr-FR"));
             ws2.Cell(1 + m, 2).Value = mr.Count;
             ws2.Cell(1 + m, 3).Value = mr.Count(x => x.ExitTime.HasValue);
             ws2.Cell(1 + m, 4).Value = (double)TotalRevenue(mr);
@@ -882,7 +882,7 @@ public class ReportService : IReportService
         return stream.ToArray();
     }
 
-    // ── Custom Range Excel ───────────────────────────────────────────────────
+    // â”€â”€ Custom Range Excel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<byte[]> GenerateCustomReportExcelAsync(int parkingId, DateTime startDate, DateTime endDate)
     {
